@@ -1,19 +1,13 @@
 from flask import Flask
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from .settings import settings
+from .extensions import init_limiter, init_redis
 
-app = Flask(__name__)
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
-)
+def create_app():
+    app = Flask(__name__)
+    app.config["SECRET_KEY"] = settings.SECRET_KEY
+    app.config["ENV"] = settings.ENV
+    init_limiter(app, settings.REDIS_URL)
+    init_redis(settings.REDIS_URL)
 
-@app.route('/')
-@limiter.limit('10/minute; 100/hour')
-def home():
-    return "hello world"
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    return app
